@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">MemeCreator</string>
+    <string name="no_memes_found">Tap + button to create your first meme</string>
+    <string name="choose_template_title">Choose template</string>
+    <string name="choose_template_description">Choose template for your next meme masterpiece</string>
+    <string name="leave_editor_dialog_title">Leave editor?</string>
+    <string name="leave_editor_dialog_description">You will loose your precious meme. If you\'re fine with that, press \'Leave\'</string>
+    <string name="leave_editor_leave_button">Leave</string>
+    <string name="dialog_cancel_button">Cancel</string>
+    <string name="your_memes_screen">Your memes</string>
+    <string name="new_meme_screen">New meme</string>
+    <string name="add_text_button">Add text</string>
+    <string name="save_meme_button">Save meme</string>
+    <string name="tap_twice_to_edit">Tap twice to text</string>
+    <string name="text">Text</string>
+    <string name="save_to_device_title">Save to device</string>
+    <string name="save_to_device_description">Save created meme in the Files of your device</string>
+    <string name="share_meme_title">Share the meme</string>
+    <string name="share_meme_description">Share your meme or open it in the other App</string>
+    <string name="delete_dialog_title">Delete %s memes?</string>
+    <string name="delete_dialog_description">You will  not be able to restore them. If you\'re fine with that, press \'Delete\'</string>
+    <string name="delete_dialog_cancel_button">Delete</string>
+    <string name="sharing_meme">Sharing Meme</string>
+</resources>

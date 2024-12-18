@@ -50,6 +50,9 @@ android {
     kapt {
         correctErrorTypes = true
     }
+    configurations.implementation {
+        exclude(group = "com.intellij", module = "annotations")
+    }
 }
 
 dependencies {
@@ -65,6 +68,10 @@ dependencies {
     implementation(libs.material.icons.extended)
     implementation(libs.compose.navigation)
     implementation(libs.hilt.android)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    annotationProcessor(libs.androidx.room.compiler)
+    kapt(libs.androidx.room.compiler)
     kapt(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     testImplementation(libs.junit)

@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.FileProvider
+import com.icdominguez.icdominguez.memecreator.presentation.model.MemeBitmap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileInputStream
@@ -21,10 +22,9 @@ import kotlin.random.Random
 class FileManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-
     val MEMES_FOLDER = File(context.filesDir, "memes")
 
-    fun saveBitmapToFile(imageBitmap: ImageBitmap) {
+    fun saveBitmapToFile(imageBitmap: ImageBitmap): String? {
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss")
         val formatted = current.format(formatter)
@@ -40,37 +40,23 @@ class FileManager @Inject constructor(
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
             outputStream.flush()
             outputStream.close()
+            return imageFile.path
         } catch (e: Exception) {
             Log.e("icd", "saveBitmapImage: ", e)
+            return null
         }
-    }
-
-    fun getAllFiles(): List<MemeBitmap> {
-        val files = File(MEMES_FOLDER, "").listFiles()
-        val bitmaps = files?.map { file ->
-            MemeBitmap(
-                imageBitmap = createImageBitmap(file),
-                path = file.path,
-            )
-        }
-        return bitmaps.orEmpty()
     }
 
     fun removeFile(path: String) {
         try {
             val file = File(path)
-            val deleted = file.delete()
-            if(deleted) {
-                Log.e("icd", "File properly deleted")
-            } else {
-                Log.e("icd", "Couldn't find file")
-            }
+            file.delete()
         } catch (e: Exception) {
             Log.e("icd", "There was an error trying to delete meme: ${e.message}")
         }
     }
 
-    private fun createImageBitmap(file: File): ImageBitmap? {
+    fun createImageBitmap(file: File): ImageBitmap? {
         var imageBitmap: ImageBitmap? = null
         try {
             val options = BitmapFactory.Options()
@@ -83,7 +69,6 @@ class FileManager @Inject constructor(
     }
 
     fun saveImageToCache(imageBitmap: ImageBitmap): Uri? {
-
         return try {
             val cachePath = File(context.cacheDir, "memes")
             val bitmap = imageBitmap.asAndroidBitmap()

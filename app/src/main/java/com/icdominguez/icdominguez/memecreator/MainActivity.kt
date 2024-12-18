@@ -9,9 +9,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.icdominguez.icdominguez.memecreator.navigation.NavArg
-import com.icdominguez.icdominguez.memecreator.navigation.NavItem
-import com.icdominguez.icdominguez.memecreator.navigation.Navigation
+import com.icdominguez.icdominguez.memecreator.presentation.navigation.NavArg
+import com.icdominguez.icdominguez.memecreator.presentation.navigation.NavItem
+import com.icdominguez.icdominguez.memecreator.presentation.navigation.Navigation
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

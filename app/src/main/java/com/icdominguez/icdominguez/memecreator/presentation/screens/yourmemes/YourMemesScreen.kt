@@ -1,10 +1,7 @@
 package com.icdominguez.icdominguez.memecreator.presentation.screens.yourmemes
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -38,13 +35,11 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,10 +60,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.icdominguez.icdominguez.memecreator.R
+import com.icdominguez.icdominguez.memecreator.presentation.screens.yourmemes.composables.SortMemesDropdownMenu
 import com.icdominguez.icdominguez.memecreator.presentation.screens.yourmemes.dialogs.DeleteMemesDialog
 import com.icdominguez.icdominguez.memecreator.ui.theme.MemeCreatorTheme
 import kotlinx.coroutines.launch
@@ -80,9 +73,7 @@ fun YourMemeScreen(
     state: YourMemesViewModel.State = YourMemesViewModel.State(),
     uiEvent: (YourMemesViewModel.Event) -> Unit = {}
 ) {
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
-    )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     var showBottomSheet by remember { mutableStateOf(false) }
     val drawables = arrayOf(
         R.drawable.arm_wrestle_agreement,
@@ -191,10 +182,27 @@ fun YourMemeScreen(
                             containerColor = MaterialTheme.colorScheme.surface,
                         ),
                         title = {
-                            Text(
-                                fontFamily = LocalTextStyle.current.fontFamily,
-                                text = stringResource(R.string.your_memes_screen)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    fontFamily = LocalTextStyle.current.fontFamily,
+                                    text = stringResource(R.string.your_memes_screen)
+                                )
+
+                                Spacer(modifier = Modifier.weight(1f))
+
+                                Text(
+                                    text = state.sortOptions.description,
+                                    style = TextStyle(
+                                        fontSize = 14.sp
+                                    )
+                                )
+                                SortMemesDropdownMenu(
+                                    onNewestFirstButtonClicked = { uiEvent(YourMemesViewModel.Event.OnNewestFirstButtonClicked) },
+                                    onFavoritesFirstButtonClicked = { uiEvent(YourMemesViewModel.Event.OnFavoritesFirstButtonCLicked) }
+                                )
+                            }
                         }
                     )
                 }

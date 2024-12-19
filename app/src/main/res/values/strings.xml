@@ -21,4 +21,6 @@
     <string name="delete_dialog_description">You will  not be able to restore them. If you\'re fine with that, press \'Delete\'</string>
     <string name="delete_dialog_cancel_button">Delete</string>
     <string name="sharing_meme">Sharing Meme</string>
+    <string name="menu_favorites_first_option">Favorites first</string>
+    <string name="menu_newest_first">Newest first</string>
 </resources>

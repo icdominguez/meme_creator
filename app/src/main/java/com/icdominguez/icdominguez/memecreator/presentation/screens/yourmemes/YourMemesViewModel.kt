@@ -1,15 +1,15 @@
 package com.icdominguez.icdominguez.memecreator.presentation.screens.yourmemes
 
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.icdominguez.icdominguez.memecreator.FileManager
-import com.icdominguez.icdominguez.memecreator.presentation.model.Meme
-import com.icdominguez.icdominguez.memecreator.MemeCreatorApp
 import com.icdominguez.icdominguez.memecreator.domain.usecases.DeleteMemeUseCase
 import com.icdominguez.icdominguez.memecreator.domain.usecases.GetAllUseCase
 import com.icdominguez.icdominguez.memecreator.domain.usecases.UpdateIsFavoriteMemeUseCase
 import com.icdominguez.icdominguez.memecreator.presentation.MviViewModel
+import com.icdominguez.icdominguez.memecreator.presentation.SortOptions
+import com.icdominguez.icdominguez.memecreator.presentation.Utils
+import com.icdominguez.icdominguez.memecreator.presentation.model.Meme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -28,6 +28,7 @@ class YourMemesViewModel @Inject constructor(
         val isSelectionMode: Boolean = false,
         val showDeleteDialog: Boolean = false,
         val imageUri: List<Uri>? = null,
+        val sortOptions: SortOptions = SortOptions.FAVORITES_FIRST
     )
 
     override var currentState: State = State()
@@ -39,11 +40,12 @@ class YourMemesViewModel @Inject constructor(
         data class OnSelectMemeButton(val selectedMeme: Meme): Event()
         data object OnDeleteDialogDismissed: Event()
         data object OnDeleteDialogConfirmed: Event()
-        data object OnScreenLoaded: Event()
         data object OnShareMemeButtonClicked: Event()
         data object OnShareMemeResult: Event()
         data object OnShareMemeCreated: Event()
         data class OnFavoriteIconButtonClicked(val selectedMeme: Meme): Event()
+        data object OnNewestFirstButtonClicked: Event()
+        data object OnFavoritesFirstButtonCLicked: Event()
     }
 
     override fun uiEvent(event: Event) {
@@ -54,11 +56,30 @@ class YourMemesViewModel @Inject constructor(
             is Event.OnSelectMemeButton -> onMemeClicked(event.selectedMeme)
             is Event.OnDeleteDialogDismissed -> onDeleteDialogDismissed()
             is Event.OnDeleteDialogConfirmed -> onDeleteDialogConfirmed()
-            is Event.OnScreenLoaded -> getMyMemes()
             is Event.OnShareMemeResult -> onShareMemeResult()
             is Event.OnShareMemeButtonClicked -> onShareMemeButtonClicked()
             is Event.OnShareMemeCreated -> onShareMemeCreated()
             is Event.OnFavoriteIconButtonClicked -> onFavoriteIconButtonClicked(event.selectedMeme)
+            is Event.OnNewestFirstButtonClicked -> onNewestFirstButtonClicked()
+            is Event.OnFavoritesFirstButtonCLicked -> onFavoritesFirstButtonClicked()
+        }
+    }
+
+    private fun onFavoritesFirstButtonClicked() {
+        updateState {
+            copy(
+                sortOptions = SortOptions.FAVORITES_FIRST,
+                memes = sortList(memeList = state.value.memes, sortOption = SortOptions.FAVORITES_FIRST)
+            )
+        }
+    }
+
+    private fun onNewestFirstButtonClicked() {
+        updateState {
+            copy(
+                sortOptions = SortOptions.NEWEST_FIRST,
+                memes = sortList(state.value.memes, sortOption = SortOptions.NEWEST_FIRST),
+            )
         }
     }
 
@@ -102,7 +123,6 @@ class YourMemesViewModel @Inject constructor(
                 fileManager.removeFile(meme.path)
             }
         }
-        //getMyMemes()
     }
 
     private fun onDeleteDialogDismissed() {
@@ -153,30 +173,6 @@ class YourMemesViewModel @Inject constructor(
         }
     }
 
-    private fun getMyMemes() {
-        viewModelScope.launch {
-            /*val memes = mutableListOf<Meme>()
-            val memesBbdd = MemeCreatorApp.memeDatabase.memeDao().getAll()
-
-            memesBbdd.map { meme ->
-                val file = File(meme.path, "")
-                val bitmap = fileManager.createImageBitmap(file)
-                bitmap?.let {
-                    memes.add(
-                        Meme(
-                            imageBitmap = it,
-                            path = file.path,
-                            selected = false,
-                            id = meme.uid
-                        )
-                    )
-                }
-            }
-
-            updateState { copy(memes = memes) }*/
-        }
-    }
-
     private fun onShareMemeButtonClicked() {
         val memesToShare = state.value.memes.filter { it.selected }
         val bitmaps = mutableListOf<Uri>()
@@ -204,14 +200,28 @@ class YourMemesViewModel @Inject constructor(
                                 path = it,
                                 imageBitmap = fileManager.createImageBitmap(File(it)),
                                 selected = false,
-                                isFavorite = meme.favorite
+                                isFavorite = meme.favorite,
+                                dateCreated = Utils.localDateTimeToCalendar(localDateTime = meme.date)
                             )
                         )
                     }
                 }
 
-                updateState { copy(memes = memeList) }
+                val sortedList = sortList(memeList, state.value.sortOptions)
+
+                updateState { copy(memes = sortedList) }
             }
         }
     }
+
+    private fun sortList(memeList: List<Meme>, sortOption: SortOptions) =
+        when(sortOption) {
+            SortOptions.FAVORITES_FIRST -> {
+                memeList.sortedWith(compareByDescending<Meme> { it.isFavorite }.thenBy { it.dateCreated })
+            }
+
+            SortOptions.NEWEST_FIRST -> {
+                memeList.sortedWith(compareByDescending { it.dateCreated })
+            }
+        }
 }

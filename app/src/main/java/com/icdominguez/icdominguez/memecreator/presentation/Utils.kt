@@ -1,5 +1,9 @@
 package com.icdominguez.icdominguez.memecreator.presentation
 
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.Calendar
+import java.util.Date
 import kotlin.random.Random
 
 object Utils {
@@ -12,5 +16,13 @@ object Utils {
         } else {
             randomNumber
         }
+    }
+
+    fun localDateTimeToCalendar(localDateTime: LocalDateTime): Calendar {
+        val instant = localDateTime.atZone(ZoneId.systemDefault()).toInstant()
+        val date = Date.from(instant)
+        val calendar = Calendar.getInstance()
+        calendar.time = date
+        return calendar
     }
 }

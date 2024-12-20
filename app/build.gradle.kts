@@ -7,12 +7,12 @@ plugins {
 }
 
 android {
-    namespace = "com.icdominguez.icdominguez.memecreator"
+    namespace = "com.icdominguez.icdominguez.master_meme"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.icdominguez.icdominguez.memecreator"
-        minSdk = 26
+        applicationId = "com.icdominguez.icdominguez.master_meme"
+        minSdk = 31
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"

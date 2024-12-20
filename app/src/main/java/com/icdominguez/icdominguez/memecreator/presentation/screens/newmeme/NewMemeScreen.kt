@@ -37,9 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.icdominguez.icdominguez.memecreator.R
-import com.icdominguez.icdominguez.memecreator.presentation.model.TextMeme
 import com.icdominguez.icdominguez.memecreator.presentation.screens.newmeme.composables.DraggableComponent
-import com.icdominguez.icdominguez.memecreator.presentation.screens.newmeme.composables.EditTextComponent
+import com.icdominguez.icdominguez.memecreator.presentation.screens.newmeme.composables.EditTextExtendedComponent
 import com.icdominguez.icdominguez.memecreator.presentation.screens.newmeme.dialogs.EditTextDialog
 import com.icdominguez.icdominguez.memecreator.presentation.screens.newmeme.dialogs.LeaveEditorDialog
 import com.icdominguez.icdominguez.memecreator.presentation.screens.newmeme.composables.OptionsComponent
@@ -126,20 +125,16 @@ fun NewMemeScreen(
                             onAddTextButtonClicked = { uiEvent(NewMemeViewModel.Event.AddTextButtonClicked) }
                         )
                     }
-                        if (state.showEditTextComponent) {
-                            EditTextComponent(
-                                onSliderValueChanged = {
-                                    uiEvent(
-                                        NewMemeViewModel.Event.OnSliderValueChanged(
-                                            it
-                                        )
-                                    )
-                                },
-                                onCloseButtonClicked = { uiEvent(NewMemeViewModel.Event.OnEditTextComponentCloseButtonClicked) },
-                                onCheckButtonClicked = { uiEvent(NewMemeViewModel.Event.OnEditTextComponentCheckButtonClicked) },
-                                selectedMeme = state.selectedMeme ?: TextMeme(),
-                            )
-                        }
+                    if (state.showEditTextComponent && state.selectedMeme != null) {
+                        EditTextExtendedComponent(
+                            selectedMeme = state.selectedMeme,
+                            onCustomFontClicked = { uiEvent(NewMemeViewModel.Event.OnCustomFontClicked(it)) },
+                            onSliderValueChanged = { uiEvent(NewMemeViewModel.Event.OnSliderValueChanged(it)) },
+                            onColorClicked = { uiEvent(NewMemeViewModel.Event.OnColorClicked(it)) },
+                            onCloseButtonClicked = { uiEvent(NewMemeViewModel.Event.OnEditTextComponentCloseButtonClicked) },
+                            onCheckButtonClicked = { uiEvent(NewMemeViewModel.Event.OnEditTextComponentCheckButtonClicked) },
+                        )
+                    }
 
                     if(state.showEditTextDialog) {
                         EditTextDialog(

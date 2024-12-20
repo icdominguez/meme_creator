@@ -1,8 +1,11 @@
 package com.icdominguez.icdominguez.memecreator.presentation.screens.newmeme.composables
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -15,14 +18,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
+val colors = listOf("#FFFFFF", "#F2DE5B", "#FF532F", "#F83F3C", "#8329A5", "#4051AD", "#1296EB")
+
 @Composable
-fun SelectColorComponent(colors: List<String>) {
+fun SelectColorComponent(
+    selectedColor: String,
+    onColorClicked: (String) -> Unit = {},
+) {
     LazyRow(
-        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(28.dp)
     ) {
         items(colors) { color ->
-            SelectColorItem(color)
+
+            SelectColorItem(
+                modifier = Modifier
+                    .clickable { onColorClicked(color) },
+                color = color,
+                selected = color == selectedColor,
+            )
         }
     }
 }
@@ -30,17 +44,30 @@ fun SelectColorComponent(colors: List<String>) {
 @Preview
 @Composable
 private fun SelectColorComponentPreview() {
-    SelectColorComponent(colors = listOf("#FFFFFF", "#F2DE5B", "#FF532F", "#F83F3C", "#8329A5", "#4051AD", "#1296EB"))
+    SelectColorComponent(selectedColor = "#FFFFFF")
 }
 
 @Composable
-fun SelectColorItem(color: String) {
-    Box(
-        modifier = Modifier
-            .size(32.dp)
+fun SelectColorItem(
+    modifier: Modifier = Modifier,
+    color: String,
+    selected: Boolean = false
+) {
+    Column(
+        modifier = modifier
+            .size(44.dp)
             .clip(CircleShape)
-            .background(color = Color(android.graphics.Color.parseColor(color)))
-    )
+            .background(if(selected) Color(android.graphics.Color.parseColor("#4A494C")) else Color.Transparent),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(color = Color(android.graphics.Color.parseColor(color)))
+        )
+    }
 }
 
 @Preview

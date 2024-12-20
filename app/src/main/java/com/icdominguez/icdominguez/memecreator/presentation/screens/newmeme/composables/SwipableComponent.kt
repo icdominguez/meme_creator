@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,10 +28,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import com.icdominguez.icdominguez.memecreator.presentation.model.TextMeme
 
@@ -123,13 +126,26 @@ fun SwipableComponent(
                     horizontal = 6.dp
                 )
         ) {
-            BorderedText(
-                text = selectedTextMeme.text,
-                fontSize = selectedTextMeme.fontSize,
-                fontWeight = FontWeight.Normal,
-                borderColor = Color.Black,
-                textColor = Color.White,
-            )
+            if(selectedTextMeme.typography.bordered) {
+                BorderedText(
+                    text = selectedTextMeme.text,
+                    fontSize = selectedTextMeme.fontSize,
+                    fontWeight = FontWeight.Normal,
+                    borderColor = if (selectedTextMeme.typography.bordered) Color.Black else Color.Transparent,
+                    fontFamily = selectedTextMeme.typography.fontFamily,
+                    textColor = Color(android.graphics.Color.parseColor(selectedTextMeme.color)),
+                )
+            } else {
+                Text(
+                    text = selectedTextMeme.text,
+                    style = TextStyle(
+                        fontSize = selectedTextMeme.fontSize.sp,
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = selectedTextMeme.typography.fontFamily,
+                        color = Color(android.graphics.Color.parseColor(selectedTextMeme.color)),
+                    )
+                )
+            }
         }
 
         if (isSelected) {

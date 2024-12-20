@@ -12,6 +12,7 @@ import com.icdominguez.icdominguez.memecreator.domain.usecases.InsertNewMemeUseC
 import com.icdominguez.icdominguez.memecreator.presentation.MviViewModel
 import com.icdominguez.icdominguez.memecreator.presentation.Utils.generateRandomNumber
 import com.icdominguez.icdominguez.memecreator.presentation.model.TextMeme
+import com.icdominguez.icdominguez.memecreator.presentation.screens.newmeme.composables.CustomFont
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -54,6 +55,8 @@ class NewMemeViewModel @Inject constructor(
         data class OnSaveButtonClicked(val picture: GraphicsLayer): Event()
         data class OnShareMemeButtonClicked(val picture: GraphicsLayer): Event()
         data object OnShareMemeResult: Event()
+        data class OnColorClicked(val color: String): Event()
+        data class OnCustomFontClicked(val customFont: CustomFont): Event()
     }
 
     override fun uiEvent(event: Event) {
@@ -76,6 +79,14 @@ class NewMemeViewModel @Inject constructor(
             is Event.OnShareMemeButtonClicked -> onShareMemeButtonClicked(event.picture)
             is Event.OnShareMemeResult -> {
                 updateState { copy(imageUri = null) }
+            }
+            is Event.OnColorClicked -> {
+                val selectedMeme = state.value.selectedMeme?.copy(color = event.color)
+                updateState { copy(selectedMeme = selectedMeme) }
+            }
+            is Event.OnCustomFontClicked -> {
+                val selectedMeme = state.value.selectedMeme?.copy(typography = event.customFont)
+                updateState { copy(selectedMeme = selectedMeme) }
             }
         }
     }
@@ -174,9 +185,16 @@ class NewMemeViewModel @Inject constructor(
 
     private fun onEditTextComponentCheckButtonClicked() {
         state.value.selectedMeme?.let { selectedMeme ->
-            val texts = state.value.texts.toMutableList().onEach {
+            val texts = state.value.texts.toMutableList().map {
                 if(it.id == selectedMeme.id) {
-                    it.fontSize = selectedMeme.fontSize
+                    it.copy(
+                        text = selectedMeme.text,
+                        fontSize = selectedMeme.fontSize,
+                        typography = selectedMeme.typography,
+                        color = selectedMeme.color
+                    )
+                } else {
+                    it
                 }
             }
 

@@ -1,37 +1,87 @@
 package com.icdominguez.icdominguez.memecreator.presentation.screens.newmeme.composables
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.icdominguez.icdominguez.memecreator.ui.theme.Impact
-import com.icdominguez.icdominguez.memecreator.ui.theme.Roboto
+import com.icdominguez.icdominguez.memecreator.ui.theme.Manrope
+import com.icdominguez.icdominguez.memecreator.ui.theme.Roboto_Bold
+import com.icdominguez.icdominguez.memecreator.ui.theme.Roboto_Thin
 
 data class CustomFont(
-    val fontFamily: FontFamily,
-    val fontName: String,
-    val text: String,
+    val fontFamily: FontFamily = Impact,
+    val fontName: String = "Stroke",
+    val fontWeight: FontWeight = FontWeight.Normal,
+    val text: String = "GOOD",
     val bordered: Boolean = true
+)
+
+val fonts = listOf(
+    CustomFont(
+        fontFamily = Impact,
+        fontName = "Impact",
+        fontWeight = FontWeight.Normal,
+        text = "Good",
+        bordered = false,
+    ),
+    CustomFont(
+        fontFamily = Roboto_Thin,
+        fontName = "Roboto",
+        fontWeight = FontWeight.Normal,
+        text = "Good",
+        bordered = false,
+    ),
+    CustomFont(
+        fontFamily = Roboto_Bold,
+        fontName = "Shadowed",
+        fontWeight = FontWeight.Normal,
+        text = "GOOD",
+        bordered = false,
+    ),
+    CustomFont(
+        fontFamily = Impact,
+        fontName = "Stroke",
+        fontWeight = FontWeight.Normal,
+        text = "GOOD",
+        bordered = true
+    )
 )
 
 @Composable
 fun SelectFontComponent(
-    fonts: List<CustomFont>
+    customFont: CustomFont = CustomFont(),
+    onCustomFontClicked: (CustomFont) -> Unit = {},
 ) {
-    LazyRow {
+    LazyRow(
+        modifier = Modifier
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         items(fonts) { font ->
-            SelectFontItem(customFont = font)
+            SelectFontItem(
+                modifier = Modifier
+                    .clickable { onCustomFontClicked(font) },
+                customFont = font,
+                selected = customFont == font,
+            )
         }
     }
 }
@@ -39,37 +89,19 @@ fun SelectFontComponent(
 @Preview
 @Composable
 private fun SelectFontComponentPreview() {
-    SelectFontComponent(
-        listOf(
-            CustomFont(
-                fontFamily = Impact,
-                fontName = "Impact",
-                text = "Good"
-            ),
-            CustomFont(
-                fontFamily = Roboto,
-                fontName = "Roboto",
-                text = "Good",
-            ),
-            CustomFont(
-                fontFamily = Roboto,
-                fontName = "Shadowed",
-                text = "GOOD"
-            ),
-            CustomFont(
-                fontFamily = Impact,
-                fontName = "Stroke",
-                text = "GOOD",
-                bordered = true
-            )
-        )
-    )
+    SelectFontComponent()
 }
 
 @Composable
-fun SelectFontItem(customFont: CustomFont) {
+fun SelectFontItem(
+    modifier: Modifier = Modifier,
+    customFont: CustomFont,
+    selected: Boolean = false
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
+            .clip(shape = RoundedCornerShape(8.dp))
+            .background(if (selected) Color(android.graphics.Color.parseColor("#2B2930")) else Color.Transparent)
             .padding(all = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -78,6 +110,7 @@ fun SelectFontItem(customFont: CustomFont) {
                 text = customFont.text,
                 fontSize = 28.sp.value,
                 fontFamily = customFont.fontFamily,
+                fontWeight = customFont.fontWeight,
             )
         } else {
             Box {
@@ -87,6 +120,7 @@ fun SelectFontItem(customFont: CustomFont) {
                     style = TextStyle(
                         fontFamily = customFont.fontFamily,
                         fontSize = 28f.sp,
+                        fontWeight = customFont.fontWeight
                     )
                 )
             }
@@ -94,8 +128,12 @@ fun SelectFontItem(customFont: CustomFont) {
 
         Text(
             text = customFont.fontName,
-            fontFamily = customFont.fontFamily,
-            color = Color.White,
+            style = TextStyle(
+                fontSize = 10.sp,
+                fontWeight = FontWeight(300),
+                fontFamily = Manrope,
+                color = Color.White,
+            )
         )
     }
 }
@@ -104,10 +142,7 @@ fun SelectFontItem(customFont: CustomFont) {
 @Composable
 private fun SelectFontItemPreview() {
     SelectFontItem(
-            CustomFont(
-                fontFamily = Impact,
-                fontName = "Impact",
-                text = "Good"
-            )
+        customFont = fonts[1],
+        selected = true
     )
 }

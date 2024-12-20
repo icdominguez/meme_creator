@@ -18,8 +18,12 @@ val Impact = FontFamily(
     Font(R.font.impact)
 )
 
-val Roboto = FontFamily(
-    Font(R.font.roboto)
+val Roboto_Thin = FontFamily(
+    Font(R.font.roboto_thin)
+)
+
+val Roboto_Bold = FontFamily(
+    Font(R.font.roboto_bold)
 )
 
 val Typography = Typography(

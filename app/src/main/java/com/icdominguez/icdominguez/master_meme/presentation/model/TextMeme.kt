@@ -10,4 +10,5 @@ data class TextMeme(
     val color: String = "#FFFFFF",
     var fontSize: Float = 20f,
     var offset: Offset? = null,
+    var enabledToEdit: Boolean = false,
 )

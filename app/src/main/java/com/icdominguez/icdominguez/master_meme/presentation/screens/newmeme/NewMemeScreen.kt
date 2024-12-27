@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,7 +45,6 @@ import com.icdominguez.icdominguez.master_meme.presentation.screens.newmeme.comp
 import com.icdominguez.icdominguez.master_meme.presentation.screens.newmeme.composables.EditTextExtendedComponent
 import com.icdominguez.icdominguez.master_meme.presentation.screens.newmeme.composables.OptionsComponent
 import com.icdominguez.icdominguez.master_meme.presentation.screens.newmeme.composables.SaveMemeComponent
-import com.icdominguez.icdominguez.master_meme.presentation.screens.newmeme.dialogs.EditTextDialog
 import com.icdominguez.icdominguez.master_meme.presentation.screens.newmeme.dialogs.LeaveEditorDialog
 import com.icdominguez.icdominguez.master_meme.ui.theme.MasterMemeTheme
 
@@ -56,6 +56,8 @@ fun NewMemeScreen(
     navController: NavHostController,
     memeTemplateId: Int,
 ) {
+    val templateName = LocalContext.current.resources.getResourceName(memeTemplateId)
+
     var showSaveMemeBottomSheetDialog by remember { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -80,7 +82,7 @@ fun NewMemeScreen(
                     navigationIcon = {
                         IconButton(
                             onClick = {
-                                if(state.texts.isNotEmpty()) {
+                                if(state.textMemeList.isNotEmpty()) {
                                     uiEvent(NewMemeViewModel.Event.OnBackClicked)
                                 } else {
                                     navController.popBackStack()
@@ -94,7 +96,13 @@ fun NewMemeScreen(
             }
         ) { paddingValues ->
 
-            BackHandler { uiEvent(NewMemeViewModel.Event.OnBackClicked) }
+            BackHandler {
+                if(state.textMemeList.isNotEmpty()) {
+                    uiEvent(NewMemeViewModel.Event.OnBackClicked)
+                } else {
+                    navController.popBackStack()
+                }
+            }
 
             Box(
                 modifier = Modifier
@@ -114,22 +122,28 @@ fun NewMemeScreen(
                 ) {
                     DraggableComponent(
                         memeTemplateId = memeTemplateId,
-                        items = state.texts,
-                        onRemoveTextButtonClicked = { uiEvent(NewMemeViewModel.Event.OnRemoveTextButtonClicked(it)) },
+                        items = state.textMemeList,
+                        onRemoveTextButtonClicked = { uiEvent(NewMemeViewModel.Event.OnRemoveTextButtonClicked) },
                         onTextTapped = { uiEvent(NewMemeViewModel.Event.OnTextTapped(textMeme = it)) },
                         selectedMeme = state.selectedMeme,
                         onTextSwaped = { uiEvent(NewMemeViewModel.Event.OnTextMemeMoved(textMeme = it)) },
-                        onTextDoubleTapped = { uiEvent(NewMemeViewModel.Event.OnTextDoubleTapped(textMeme = it)) }
+                        onTextDoubleTapped = { uiEvent(NewMemeViewModel.Event.OnTextDoubleTapped(textMeme = it)) },
+                        onDraggableComponentClicked = { uiEvent(NewMemeViewModel.Event.OnDraggableComponentClicked) },
+                        onTextChanged = { uiEvent(NewMemeViewModel.Event.OnEditTextTextFieldValueChanged(it)) }
                     )
                 }
 
                 Column(
                     modifier = Modifier.align(Alignment.BottomEnd)
                 ) {
-                    if (state.showOptionsComponent || state.texts.isEmpty() || state.selectedMeme == null) {
+                    if (state.showOptionsComponent || state.textMemeList.isEmpty() || state.selectedMeme == null) {
                         OptionsComponent(
                             onSaveMemeButtonClicked = { showSaveMemeBottomSheetDialog = true },
-                            onAddTextButtonClicked = { uiEvent(NewMemeViewModel.Event.AddTextButtonClicked) }
+                            onAddTextButtonClicked = { uiEvent(NewMemeViewModel.Event.AddTextButtonClicked) },
+                            onUndoButtonClicked = { uiEvent(NewMemeViewModel.Event.OnUndoButtonClicked) },
+                            onRedoButtonClicked = { uiEvent(NewMemeViewModel.Event.OnRedoButtonClicked) },
+                            undoItems = state.undoItems,
+                            redoItems = state.redoItems
                         )
                     }
                     if (state.showEditTextComponent && state.selectedMeme != null) {
@@ -140,15 +154,6 @@ fun NewMemeScreen(
                             onColorClicked = { uiEvent(NewMemeViewModel.Event.OnColorClicked(it)) },
                             onCloseButtonClicked = { uiEvent(NewMemeViewModel.Event.OnEditTextComponentCloseButtonClicked) },
                             onCheckButtonClicked = { uiEvent(NewMemeViewModel.Event.OnEditTextComponentCheckButtonClicked) },
-                        )
-                    }
-
-                    if(state.showEditTextDialog) {
-                        EditTextDialog(
-                            onDismissRequest = { uiEvent(NewMemeViewModel.Event.OnEditTextDialogDismissed) },
-                            onAcceptRequest = { uiEvent(NewMemeViewModel.Event.OnEditTextDialogAccepted(it)) },
-                            textMeme = state.doubleTappedText?.text ?: stringResource(R.string.tap_twice_to_edit),
-                            onTextChange = { uiEvent(NewMemeViewModel.Event.OnEditTextTextFieldValueChanged(it))}
                         )
                     }
                 }
@@ -182,7 +187,7 @@ fun NewMemeScreen(
                 Column {
                     SaveMemeComponent(
                         onSaveMemeClicked = {
-                            uiEvent(NewMemeViewModel.Event.OnSaveButtonClicked(graphicsLayer))
+                            uiEvent(NewMemeViewModel.Event.OnSaveButtonClicked(graphicsLayer, templateName))
                             navController.popBackStack()
                         },
                         onShareMemeClicked = {

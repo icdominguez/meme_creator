@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
-val colors = listOf("#FFFFFF", "#F2DE5B", "#FF532F", "#F83F3C", "#8329A5", "#4051AD", "#1296EB")
+val colors = listOf("#FFFFFF", "#F2DE5B", "#FF532F", "#F83F3C", "#8329A5", "#4051AD", "#1296EB", "#000000")
 
 @Composable
 fun SelectColorComponent(
@@ -39,6 +39,8 @@ fun SelectColorComponent(
         items(colors) { color ->
             SelectColorItem(
                 modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
                     .clickable { onColorClicked(color) },
                 color = color,
                 selected = color == selectedColor,
@@ -61,8 +63,6 @@ fun SelectColorItem(
 ) {
     Column(
         modifier = modifier
-            .size(44.dp)
-            .clip(CircleShape)
             .background(if(selected) Color(android.graphics.Color.parseColor("#4A494C")) else Color.Transparent),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally

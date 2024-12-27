@@ -9,6 +9,7 @@ data class MemeEntity(
     @PrimaryKey(autoGenerate = true)
     val uid: Int = 0,
     val path: String?,
+    val name: String?,
     val date: LocalDateTime = LocalDateTime.now(),
     val favorite: Boolean = false,
 )

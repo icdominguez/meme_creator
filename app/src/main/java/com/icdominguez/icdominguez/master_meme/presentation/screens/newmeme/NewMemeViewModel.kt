@@ -1,8 +1,12 @@
 package com.icdominguez.icdominguez.master_meme.presentation.screens.newmeme
 
 import android.net.Uri
+import android.util.Log
+import androidx.compose.material3.Text
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.layer.GraphicsLayer
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.icdominguez.icdominguez.master_meme.FileManager
 import com.icdominguez.icdominguez.master_meme.domain.usecases.InsertNewMemeUseCase
@@ -21,22 +25,22 @@ class NewMemeViewModel @Inject constructor(
 ): MviViewModel<NewMemeViewModel.State, NewMemeViewModel.Event>() {
 
     data class State (
-        val texts: List<TextMeme> = emptyList(),
+        val textMemeList: List<TextMeme> = emptyList(),
         val showOptionsComponent: Boolean = true,
         val showEditTextComponent: Boolean = false,
         val selectedMeme: TextMeme? = null,
-        val doubleTappedText: TextMeme? = null,
         val showLeaveDialog: Boolean = false,
-        val showEditTextDialog: Boolean = false,
         val bitmap: ImageBitmap? = null,
         val imageUri: Uri? = null,
+        val undoItems: List<TextMeme> = emptyList(),
+        val redoItems: List<TextMeme> = emptyList(),
     )
 
     override var currentState: State = State()
 
     sealed class Event {
         data object AddTextButtonClicked : Event()
-        data class OnRemoveTextButtonClicked(val textMeme: TextMeme): Event()
+        data object OnRemoveTextButtonClicked: Event()
         data object OnEditTextComponentCloseButtonClicked: Event()
         data object OnEditTextComponentCheckButtonClicked: Event()
         data class OnTextDoubleTapped(val textMeme: TextMeme): Event()
@@ -46,20 +50,21 @@ class NewMemeViewModel @Inject constructor(
         data object OnBackClicked: Event()
         data object OnLeaveDialogDismissed: Event()
         data object OnLeaveDialogAccepted: Event()
-        data object OnEditTextDialogDismissed: Event()
-        data class OnEditTextDialogAccepted(val text: String): Event()
         data class OnEditTextTextFieldValueChanged(val newText: String): Event()
-        data class OnSaveButtonClicked(val picture: GraphicsLayer): Event()
+        data class OnSaveButtonClicked(val picture: GraphicsLayer, val templateName: String): Event()
         data class OnShareMemeButtonClicked(val picture: GraphicsLayer): Event()
         data object OnShareMemeResult: Event()
         data class OnColorClicked(val color: String): Event()
         data class OnCustomFontClicked(val customFont: CustomFont): Event()
+        data object OnDraggableComponentClicked : Event()
+        data object OnUndoButtonClicked: Event()
+        data object OnRedoButtonClicked: Event()
     }
 
     override fun uiEvent(event: Event) {
         when(event) {
             is Event.AddTextButtonClicked -> onAddTextButtonClicked()
-            is Event.OnRemoveTextButtonClicked -> onRemoveTextButtonClicked(event.textMeme)
+            is Event.OnRemoveTextButtonClicked -> onRemoveTextButtonClicked()
             is Event.OnEditTextComponentCloseButtonClicked -> onEditTextComponentCloseButtonClicked()
             is Event.OnEditTextComponentCheckButtonClicked -> onEditTextComponentCheckButtonClicked()
             is Event.OnTextTapped -> onTextTapped(event.textMeme)
@@ -70,13 +75,9 @@ class NewMemeViewModel @Inject constructor(
             is Event.OnEditTextTextFieldValueChanged -> onEditTextTextFieldValueChanged(event.newText)
             is Event.OnLeaveDialogDismissed -> onLeaveDialogDismissed()
             is Event.OnLeaveDialogAccepted -> onLeaveDialogAccepted()
-            is Event.OnEditTextDialogDismissed -> onEditTextDialogDismissed()
-            is Event.OnEditTextDialogAccepted -> onEditTextDialogAccepted(event.text)
-            is Event.OnSaveButtonClicked -> onSaveButtonClicked(event.picture)
+            is Event.OnSaveButtonClicked -> onSaveButtonClicked(event.picture, event.templateName)
             is Event.OnShareMemeButtonClicked -> onShareMemeButtonClicked(event.picture)
-            is Event.OnShareMemeResult -> {
-                updateState { copy(imageUri = null) }
-            }
+            is Event.OnShareMemeResult -> { updateState { copy(imageUri = null) } }
             is Event.OnColorClicked -> {
                 val selectedMeme = state.value.selectedMeme?.copy(color = event.color)
                 updateState { copy(selectedMeme = selectedMeme) }
@@ -85,6 +86,31 @@ class NewMemeViewModel @Inject constructor(
                 val selectedMeme = state.value.selectedMeme?.copy(typography = event.customFont)
                 updateState { copy(selectedMeme = selectedMeme) }
             }
+            is Event.OnDraggableComponentClicked -> onDraggableComponentClicked()
+            is Event.OnUndoButtonClicked -> onUndoButtonClicked()
+            is Event.OnRedoButtonClicked -> onRedoButtonClicked()
+        }
+    }
+
+    private fun onRedoButtonClicked() {
+        val lastText = state.value.redoItems.last()
+        updateState {
+            copy(
+                textMemeList = state.value.textMemeList.toMutableList().apply { add(lastText) }.toList(),
+                undoItems = state.value.undoItems.toMutableList().apply { add(lastText) }.toList(),
+                redoItems = state.value.redoItems.toMutableList().apply { remove(last()) }.toList()
+            )
+        }
+    }
+
+    private fun onUndoButtonClicked() {
+        val lastText = state.value.textMemeList.last()
+        updateState {
+            copy(
+                textMemeList = state.value.textMemeList.toMutableList().apply { remove(lastText) }.toList(),
+                redoItems = state.value.redoItems.toMutableList().apply { add(lastText) }.toList(),
+                undoItems = state.value.undoItems.toMutableList().apply { remove(lastText) }.toList()
+            )
         }
     }
 
@@ -101,31 +127,11 @@ class NewMemeViewModel @Inject constructor(
         updateState { copy(selectedMeme = selectedMeme) }
     }
 
-    private fun onEditTextDialogDismissed() {
-        updateState { copy(showEditTextDialog = false) }
-    }
-
-    private fun onSaveButtonClicked(graphicsLayer: GraphicsLayer) {
+    private fun onSaveButtonClicked(graphicsLayer: GraphicsLayer, templateName: String) {
         viewModelScope.launch {
-            insertNewMemeUseCase(graphicsLayer)
+            val fileName = "${templateName.split("/").last()}-${state.value.textMemeList.joinToString("_") { it.text }}"
+            insertNewMemeUseCase(graphicsLayer, fileName)
         }
-    }
-
-    private fun onEditTextDialogAccepted(text: String) {
-        state.value.doubleTappedText?.let { doubleTappedText ->
-            val texts = state.value.texts.toMutableList().onEach {
-                if(it.id == doubleTappedText.id) {
-                    it.text = text
-                }
-            }
-
-            updateState { copy(
-                texts = texts,
-                doubleTappedText = null,
-                showEditTextDialog = false,
-            ) }
-        }
-
     }
 
     private fun onLeaveDialogDismissed() {
@@ -137,20 +143,23 @@ class NewMemeViewModel @Inject constructor(
     }
 
     private fun onBackClicked() {
-        if (state.value.texts.isNotEmpty()) {
+        if (state.value.textMemeList.isNotEmpty()) {
             updateState { copy(showLeaveDialog = true) }
         }
     }
 
-    private fun onRemoveTextButtonClicked(textMeme: TextMeme) {
-        val texts = state.value.texts.toMutableList().apply {
-            val index = this.indexOfFirst { it.id == textMeme.id }
+    private fun onRemoveTextButtonClicked() {
+        Log.i("icd", "Text to remove: ${state.value.selectedMeme}")
+        val texts = state.value.textMemeList.toMutableList().apply {
+            val index = this.indexOfFirst { it.id == state.value.selectedMeme?.id }
             this.removeAt(index)
-        }
+        }.toList()
+
+        Log.i("icd", "Text list updated: $texts")
 
         updateState {
             copy(
-                texts = texts,
+                textMemeList = texts,
                 showEditTextComponent = false,
                 showOptionsComponent = texts.isEmpty(),
                 selectedMeme = null,
@@ -159,13 +168,30 @@ class NewMemeViewModel @Inject constructor(
     }
 
     private fun onAddTextButtonClicked() {
-        val textMeme = TextMeme(id = generateRandomNumber(state.value.texts.map { it.id  }))
+        val textMeme = TextMeme(id = generateRandomNumber(state.value.textMemeList.map { it.id  }))
         updateState {
             copy(
                 showOptionsComponent = false,
                 showEditTextComponent = true,
-                texts = state.value.texts.plus(textMeme),
+                textMemeList = state.value.textMemeList.plus(textMeme),
                 selectedMeme = textMeme
+            )
+        }
+    }
+
+    private fun onDraggableComponentClicked() {
+        val updatedTexts = state.value.textMemeList.toMutableList().map { text ->
+            if(text.id == state.value.selectedMeme?.id) {
+                text.copy(text = state.value.selectedMeme!!.text)
+            } else {
+                text
+            }
+        }.toList()
+
+        updateState {
+            copy(
+                textMemeList = updatedTexts,
+                selectedMeme = null
             )
         }
     }
@@ -182,50 +208,52 @@ class NewMemeViewModel @Inject constructor(
 
     private fun onEditTextComponentCheckButtonClicked() {
         state.value.selectedMeme?.let { selectedMeme ->
-            val texts = state.value.texts.toMutableList().map {
+            val texts = state.value.textMemeList.toMutableList().map {
                 if(it.id == selectedMeme.id) {
                     it.copy(
                         text = selectedMeme.text,
                         fontSize = selectedMeme.fontSize,
                         typography = selectedMeme.typography,
-                        color = selectedMeme.color
+                        color = selectedMeme.color,
+                        offset = selectedMeme.offset
                     )
                 } else {
                     it
                 }
-            }
+            }.toList()
 
             updateState {
                 copy(
-                    texts = texts,
+                    textMemeList = texts,
                     showEditTextComponent = false,
                     showOptionsComponent = true,
-                    selectedMeme = null
+                    selectedMeme = null,
+                    undoItems = state.value.undoItems.toMutableList().apply { add(selectedMeme) }.toList(),
+                    redoItems = emptyList(),
                 )
             }
         }
     }
 
     private fun onTextTapped(textMeme: TextMeme) {
-        if(!state.value.showEditTextComponent) {
-            updateState {
-                copy(
-                    showEditTextComponent = true,
-                    showOptionsComponent = false,
-                    selectedMeme = textMeme
-                )
-            }
+        Log.i("icd", "Text clicked: $textMeme")
+        updateState {
+            copy(
+                showEditTextComponent = true,
+                showOptionsComponent = false,
+                selectedMeme = state.value.textMemeList.firstOrNull { it.id == textMeme.id }
+            )
         }
     }
 
     private fun onTextMemeMoved(textMeme: TextMeme) {
-        val texts = state.value.texts.toMutableList().onEach {
+        val texts = state.value.textMemeList.toMutableList().onEach {
             if(it.id == textMeme.id) {
                 it.offset = textMeme.offset
             }
         }
 
-        updateState { copy(texts = texts) }
+        updateState { copy(textMemeList = texts) }
     }
 
     private fun onSliderValueChanged(sliderValue: Float) {
@@ -234,6 +262,8 @@ class NewMemeViewModel @Inject constructor(
     }
 
     private fun onTextDoubleTapped(textMeme: TextMeme) {
-        updateState { copy(showEditTextDialog = true, doubleTappedText = textMeme) }
+        Log.i("icd", "Text double tapped: $textMeme")
+        val selectedMemeUpdated = state.value.selectedMeme ?: state.value.textMemeList.firstOrNull { it.id == textMeme.id }
+        updateState { copy(selectedMeme = selectedMemeUpdated?.copy(enabledToEdit = true)) }
     }
 }

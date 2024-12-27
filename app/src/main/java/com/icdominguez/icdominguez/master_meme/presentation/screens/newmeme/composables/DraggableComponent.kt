@@ -2,16 +2,25 @@ package com.icdominguez.icdominguez.master_meme.presentation.screens.newmeme.com
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.icdominguez.icdominguez.master_meme.R
@@ -22,19 +31,31 @@ fun DraggableComponent(
     modifier: Modifier = Modifier,
     memeTemplateId: Int,
     items: List<TextMeme>,
-    onRemoveTextButtonClicked: (TextMeme) -> Unit,
-    onTextTapped: (TextMeme) -> Unit,
+    onRemoveTextButtonClicked: () -> Unit = {},
+    onTextTapped: (TextMeme) -> Unit = {},
     selectedMeme: TextMeme? = null,
-    onTextSwaped: (TextMeme) -> Unit,
-    onTextDoubleTapped: (TextMeme) -> Unit,
+    onTextSwaped: (TextMeme) -> Unit = {},
+    onTextDoubleTapped: (TextMeme) -> Unit = {},
+    onDraggableComponentClicked: () -> Unit = {},
+    onTextChanged: (String) -> Unit = {},
 ) {
+    val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
     val boxSize = remember { mutableStateOf(Size.Zero) }
+    val integrationSource = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
             .background(Color.Red)
             .onSizeChanged { size ->
                 boxSize.value = Size(size.width.toFloat(), size.height.toFloat())
+            }
+            .clickable(
+                interactionSource = integrationSource,
+                indication = null
+            ) {
+                onDraggableComponentClicked()
             },
     ) {
         Image(
@@ -46,25 +67,26 @@ fun DraggableComponent(
         )
 
         items.map { textMeme ->
-            //val meme = selectedMeme.takeIf { it?.id == textMeme.id } ?: textMeme
-            if (selectedMeme?.id == textMeme.id) {
+            key(textMeme.id) {
+                val textToShow = if(textMeme.id == selectedMeme?.id) selectedMeme else textMeme
                 SwipableComponent(
                     boxSize = boxSize.value,
-                    onRemoveTextClicked = { onRemoveTextButtonClicked(selectedMeme) },
-                    onTextTapped = { onTextTapped(selectedMeme) },
-                    selectedTextMeme = selectedMeme,
+                    onRemoveTextClicked = { onRemoveTextButtonClicked() },
+                    onTextTapped = {
+                        onTextTapped(it)
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                    },
+                    selectedTextMeme = textToShow,
                     onTextSwaped = { onTextSwaped(it) },
-                    onTextDoubleTapped = { onTextDoubleTapped(it) },
-                    isSelected = true,
-                )
-            } else {
-                SwipableComponent(
-                    boxSize = boxSize.value,
-                    onRemoveTextClicked = { onRemoveTextButtonClicked(textMeme) },
-                    onTextTapped = { onTextTapped(textMeme) },
-                    selectedTextMeme = textMeme,
-                    onTextSwaped = { onTextSwaped(it) },
-                    onTextDoubleTapped = { onTextDoubleTapped(it) },
+                    onTextDoubleTapped = {
+                        onTextDoubleTapped(it)
+                        focusManager.clearFocus()
+                    },
+                    onTextChanged = { onTextChanged(it) },
+                    isSelected = textMeme.id == selectedMeme?.id,
+                    keyboardController = keyboardController,
+                    focusRequester = focusRequester
                 )
             }
         }
@@ -81,6 +103,7 @@ fun SwipableTextPreview() {
         onTextTapped = {},
         selectedMeme = TextMeme(),
         onTextSwaped = {},
-        onTextDoubleTapped = {}
+        onTextDoubleTapped = {},
+        onDraggableComponentClicked = {}
     )
 }

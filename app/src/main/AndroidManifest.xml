@@ -10,7 +10,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MemeCreator"
-        android:name=".MasterMemeApp">
+        android:name=".MasterMemeApp"
+        android:windowSoftInputMode="adjustResize">
 
         <provider
             android:name="androidx.core.content.FileProvider"

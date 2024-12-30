@@ -50,6 +50,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toOffset
 import androidx.compose.ui.unit.toSize
 import com.icdominguez.icdominguez.master_meme.presentation.model.TextMeme
 
@@ -111,51 +112,35 @@ fun SwipableComponent(
 
     val textOffset = remember { mutableStateOf(firstPositionOffset) }
 
+    fun calculateNewOffset(textOffset: Offset): IntOffset {
+        val limitedX =
+            textOffset.x.coerceIn(
+                -(paddingSize.width),
+                (boxSize.width + paddingSize.width) - textSize.value.width
+            ).toInt()
+
+        val limitedY =
+            textOffset.y.coerceIn(
+                -(paddingSize.height),
+                (boxSize.height + paddingSize.height) - textSize.value.height
+            ).toInt()
+
+        return IntOffset(limitedX, limitedY)
+    }
+
     Box(
         modifier = Modifier
             .onGloballyPositioned { layoutCoordinates ->
                 textSize.value = layoutCoordinates.size.toSize()
             }
             .offset {
-                val newOffset = textOffset.value
-
-                val limitedX =
-                    newOffset.x.coerceIn(
-                        -(paddingSize.width),
-                        (boxSize.width + paddingSize.width) - textSize.value.width
-                    )
-                val limitedY =
-                    newOffset.y.coerceIn(
-                        -(paddingSize.height),
-                        (boxSize.height + paddingSize.height) - textSize.value.height
-                    )
-
-                textOffset.value = Offset(limitedX, limitedY)
-
-                IntOffset(
-                    x = textOffset.value.x.toInt(),
-                    y = textOffset.value.y.toInt()
-                )
+                calculateNewOffset(textOffset.value)
             }
             .pointerInput(Unit) {
                 detectDragGestures { change, dragAmount ->
                     change.consume()
                     isDragging.value = true
-                    val newOffset = textOffset.value + dragAmount
-
-
-                    val limitedX =
-                        newOffset.x.coerceIn(
-                            -(paddingSize.width),
-                            (boxSize.width + paddingSize.width) - textSize.value.width
-                        )
-                    val limitedY =
-                        newOffset.y.coerceIn(
-                            -(paddingSize.height),
-                            (boxSize.height + paddingSize.height) - textSize.value.height
-                        )
-
-                    textOffset.value = Offset(limitedX, limitedY)
+                    textOffset.value = calculateNewOffset(textOffset.value + dragAmount).toOffset()
                     onTextSwaped(selectedTextMeme.copy(offset = textOffset.value))
                 }
             }
@@ -257,10 +242,6 @@ fun SwipableComponent(
             }
         }
     }
-}
-
-private fun calculateOffset() {
-
 }
 
 @Composable

@@ -1,6 +1,5 @@
 package com.icdominguez.icdominguez.master_meme.presentation.screens.newmeme.composables
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,6 +43,7 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import com.icdominguez.icdominguez.master_meme.presentation.model.TextMeme
-import com.icdominguez.icdominguez.master_meme.ui.theme.SecondaryFixedDim
 
 @Composable
 fun SwipableComponent(
@@ -67,19 +66,13 @@ fun SwipableComponent(
     focusRequester: FocusRequester,
     keyboardController: SoftwareKeyboardController? = null,
 ) {
-    Log.i("icd", "Swipable Component: Pinto item: $selectedTextMeme")
-
-    val yPaddingToPixels = with(LocalDensity.current) { 20.dp.toPx() }
-    val xPaddingToPixels = with(LocalDensity.current) { 18.dp.toPx() }
+    val paddingSize = Size(
+        width = with(LocalDensity.current) { 20.dp.toPx() },
+        height = with(LocalDensity.current) { 18.dp.toPx() }
+    )
     var hasFocus by remember { mutableStateOf(false) }
 
-    val firstPositionOffset = Offset(
-        x = selectedTextMeme.offset?.x ?: -xPaddingToPixels,
-        y = selectedTextMeme.offset?.y ?: -yPaddingToPixels
-    )
-
-    val textOffset = remember { mutableStateOf(firstPositionOffset) }
-    val textSize = remember { mutableStateOf(Size.Zero) }
+    val textMeasurer = rememberTextMeasurer()
     val isDragging = remember { mutableStateOf(false) }
 
     var textFieldValue by remember { mutableStateOf(TextFieldValue(selectedTextMeme.text)) }
@@ -99,6 +92,25 @@ fun SwipableComponent(
         textAlign = TextAlign.Center
     )
 
+    val textSize = remember {
+        val textSize = textMeasurer.measure(
+            text = selectedTextMeme.text,
+            style = textStyle
+        ).size
+
+        mutableStateOf( Size(
+            width = textSize.width + paddingSize.width,
+            height = textSize.height + paddingSize.height
+        ))
+    }
+
+    val firstPositionOffset = Offset(
+        x = (boxSize.width - (textSize.value.width + paddingSize.width)) / 2,
+        y = (boxSize.height - (textSize.value.height + paddingSize.height)) / 2
+    )
+
+    val textOffset = remember { mutableStateOf(firstPositionOffset) }
+
     Box(
         modifier = Modifier
             .onGloballyPositioned { layoutCoordinates ->
@@ -109,13 +121,13 @@ fun SwipableComponent(
 
                 val limitedX =
                     newOffset.x.coerceIn(
-                        -(xPaddingToPixels),
-                        (boxSize.width + xPaddingToPixels) - textSize.value.width
+                        -(paddingSize.width),
+                        (boxSize.width + paddingSize.width) - textSize.value.width
                     )
                 val limitedY =
                     newOffset.y.coerceIn(
-                        -(yPaddingToPixels),
-                        (boxSize.height + yPaddingToPixels) - textSize.value.height
+                        -(paddingSize.height),
+                        (boxSize.height + paddingSize.height) - textSize.value.height
                     )
 
                 textOffset.value = Offset(limitedX, limitedY)
@@ -127,25 +139,24 @@ fun SwipableComponent(
             }
             .pointerInput(Unit) {
                 detectDragGestures { change, dragAmount ->
-                    if(isSelected) {
-                        change.consume()
-                        isDragging.value = true
-                        val newOffset = textOffset.value + dragAmount
+                    change.consume()
+                    isDragging.value = true
+                    val newOffset = textOffset.value + dragAmount
 
-                        val limitedX =
-                            newOffset.x.coerceIn(
-                                -(xPaddingToPixels),
-                                (boxSize.width + xPaddingToPixels) - textSize.value.width
-                            )
-                        val limitedY =
-                            newOffset.y.coerceIn(
-                                -(yPaddingToPixels),
-                                (boxSize.height + yPaddingToPixels) - textSize.value.height
-                            )
 
-                        textOffset.value = Offset(limitedX, limitedY)
-                        onTextSwaped(selectedTextMeme.copy(offset = textOffset.value))
-                    }
+                    val limitedX =
+                        newOffset.x.coerceIn(
+                            -(paddingSize.width),
+                            (boxSize.width + paddingSize.width) - textSize.value.width
+                        )
+                    val limitedY =
+                        newOffset.y.coerceIn(
+                            -(paddingSize.height),
+                            (boxSize.height + paddingSize.height) - textSize.value.height
+                        )
+
+                    textOffset.value = Offset(limitedX, limitedY)
+                    onTextSwaped(selectedTextMeme.copy(offset = textOffset.value))
                 }
             }
     ) {
@@ -169,7 +180,7 @@ fun SwipableComponent(
                 )
         ) {
             LaunchedEffect(selectedTextMeme.enabledToEdit) {
-                if(selectedTextMeme.enabledToEdit) {
+                if (selectedTextMeme.enabledToEdit) {
                     focusRequester.requestFocus()
                     keyboardController?.show()
                 }
@@ -179,12 +190,12 @@ fun SwipableComponent(
                 modifier = Modifier
                     .focusRequester(focusRequester)
                     .onFocusChanged { focusState ->
-                        if(focusState.isFocused && !hasFocus) {
+                        if (focusState.isFocused && !hasFocus) {
                             textFieldValue = textFieldValue.copy(
                                 selection = TextRange(0, textFieldValue.text.length)
                             )
                             hasFocus = true
-                        } else if(!focusState.isFocused) {
+                        } else if (!focusState.isFocused) {
                             hasFocus = false
                         }
                     }
@@ -192,7 +203,7 @@ fun SwipableComponent(
                 cursorBrush = SolidColor(Color(android.graphics.Color.parseColor("#D0BCFF"))),
                 value = textFieldValue,
                 onValueChange = { newValue ->
-                    textFieldValue = if(hasFocus) {
+                    textFieldValue = if (hasFocus) {
                         newValue
                     } else {
                         textFieldValue.copy(text = newValue.text)
@@ -201,7 +212,7 @@ fun SwipableComponent(
                 },
                 textStyle = textStyle,
                 decorationBox = { innerTextField ->
-                    if(selectedTextMeme.typography.bordered) {
+                    if (selectedTextMeme.typography.bordered) {
                         Text(
                             fontFamily = selectedTextMeme.typography.fontFamily,
                             text = selectedTextMeme.text,
@@ -246,6 +257,10 @@ fun SwipableComponent(
             }
         }
     }
+}
+
+private fun calculateOffset() {
+
 }
 
 @Composable

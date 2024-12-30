@@ -25,8 +25,8 @@ fun Navigation() {
             YourMemeScreen(
                 state = viewModel.state.collectAsStateWithLifecycle().value,
                 uiEvent = viewModel::uiEvent,
-                onClick = { memeTemplateId ->
-                    navController.navigate(NavItem.NewMeme.createNavRoute(memeTemplateId))
+                onClick = { memeTemplate ->
+                    navController.navigate(NavItem.NewMeme.createNavRoute(memeTemplate))
                 },
             )
         }
@@ -35,14 +35,14 @@ fun Navigation() {
             arguments = NavItem.NewMeme.args
         ) { backStackEntry ->
             val viewmodel = hiltViewModel<NewMemeViewModel>(backStackEntry)
-            val memeTemplateId = backStackEntry.arguments?.getInt(NavArg.MemeTemplateId.key)
-            requireNotNull(memeTemplateId) { "Can't be null, new meme requires a template id" }
+            val memeTemplate = backStackEntry.arguments?.getString(NavArg.MemeTemplate.key)
+            requireNotNull(memeTemplate) { "Can't be null, new meme requires a template" }
 
             NewMemeScreen(
                 state = viewmodel.state.collectAsStateWithLifecycle().value,
                 uiEvent = viewmodel::uiEvent,
                 navController = navController,
-                memeTemplateId = memeTemplateId
+                memeTemplate = memeTemplate
             )
         }
     }

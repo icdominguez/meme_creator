@@ -2,12 +2,14 @@ package com.icdominguez.icdominguez.master_meme.presentation.screens.yourmemes
 
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
-import com.icdominguez.icdominguez.master_meme.FileManager
+import com.icdominguez.icdominguez.master_meme.domain.usecases.CreateImageBitmapUseCase
 import com.icdominguez.icdominguez.master_meme.domain.usecases.DeleteMemeUseCase
 import com.icdominguez.icdominguez.master_meme.domain.usecases.GetAllUseCase
+import com.icdominguez.icdominguez.master_meme.domain.usecases.GetMemeTemplatesUseCase
+import com.icdominguez.icdominguez.master_meme.domain.usecases.RemoveFileUseCase
+import com.icdominguez.icdominguez.master_meme.domain.usecases.SaveImageToCache
 import com.icdominguez.icdominguez.master_meme.domain.usecases.UpdateIsFavoriteMemeUseCase
 import com.icdominguez.icdominguez.master_meme.presentation.MviViewModel
-import com.icdominguez.icdominguez.master_meme.presentation.SortOptions
 import com.icdominguez.icdominguez.master_meme.presentation.Utils
 import com.icdominguez.icdominguez.master_meme.presentation.model.Meme
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,10 +19,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class YourMemesViewModel @Inject constructor(
-    private val fileManager: FileManager,
+    private val getMemeTemplatesUseCase: GetMemeTemplatesUseCase,
     private val getAllUseCase: GetAllUseCase,
     private val updateIsFavoriteMemeUseCase: UpdateIsFavoriteMemeUseCase,
     private val deleteMemeUseCase: DeleteMemeUseCase,
+    private val createImageBitmapUseCase: CreateImageBitmapUseCase,
+    private val removeFileUseCase: RemoveFileUseCase,
+    private val saveImageToCache: SaveImageToCache,
 ): MviViewModel<YourMemesViewModel.State, YourMemesViewModel.Event>() {
 
     data class State(
@@ -28,7 +33,8 @@ class YourMemesViewModel @Inject constructor(
         val isSelectionMode: Boolean = false,
         val showDeleteDialog: Boolean = false,
         val imageUri: List<Uri>? = null,
-        val sortOptions: SortOptions = SortOptions.FAVORITES_FIRST
+        val sortOptions: SortOptions = SortOptions.FAVORITES_FIRST,
+        val templates: List<String> = emptyList(),
     )
 
     override var currentState: State = State()
@@ -120,7 +126,7 @@ class YourMemesViewModel @Inject constructor(
                 viewModelScope.launch {
                     deleteMemeUseCase(memeId = meme.id)
                 }
-                fileManager.removeFile(meme.path)
+                removeFileUseCase(meme.path)
             }
         }
     }
@@ -180,7 +186,7 @@ class YourMemesViewModel @Inject constructor(
 
         memesToShare.map { meme ->
             meme.imageBitmap?.let { bitmap ->
-                fileManager.saveImageToCache(bitmap)?.let { uri ->
+                saveImageToCache(bitmap)?.let { uri ->
                     bitmaps.add(uri)
                 }
             }
@@ -199,7 +205,7 @@ class YourMemesViewModel @Inject constructor(
                             Meme(
                                 id = meme.uid,
                                 path = it,
-                                imageBitmap = fileManager.createImageBitmap(File(it)),
+                                imageBitmap = createImageBitmapUseCase(File(it)),
                                 selected = false,
                                 isFavorite = meme.favorite,
                                 dateCreated = Utils.localDateTimeToCalendar(localDateTime = meme.date)
@@ -225,4 +231,11 @@ class YourMemesViewModel @Inject constructor(
                 memeList.sortedWith(compareByDescending { it.dateCreated })
             }
         }
+
+    init {
+        viewModelScope.launch {
+            val templates = getMemeTemplatesUseCase()
+            updateState { copy(templates = templates) }
+        }
+    }
 }

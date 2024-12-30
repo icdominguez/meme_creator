@@ -1,7 +1,11 @@
 package com.icdominguez.icdominguez.master_meme.presentation.screens.yourmemes.composables
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -22,9 +26,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -37,11 +43,11 @@ import kotlinx.coroutines.CoroutineScope
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TemplateSearchBar(
-    searchList: List<Pair<Int, String>>,
+    searchList: List<String>,
     sheetState: SheetState,
     scope: CoroutineScope,
     active: MutableState<Boolean>,
-    onTemplateClicked: (Int) -> Unit = {},
+    onTemplateClicked: (String) -> Unit = {},
     focusRequester: FocusRequester,
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -51,7 +57,7 @@ fun TemplateSearchBar(
         query = searchQuery,
         onQueryChange = { newQuery ->
             searchQuery = newQuery
-            searchListState = searchList.filter { it.second.contains(searchQuery.lowercase()) }
+            searchListState = searchList.filter { it.split("/").last().contains(searchQuery.lowercase()) }
         },
         modifier = Modifier
             .focusRequester(focusRequester = focusRequester)
@@ -92,30 +98,34 @@ fun TemplateSearchBar(
             containerColor = Color.Transparent
         ),
         content = {
-            Text(
-                modifier = Modifier
-                    .padding(top = 12.dp),
-                text = if(searchListState.isNotEmpty()) "${searchListState.size} templates" else "No memes found :(",
-                style = TextStyle(
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            )
-            LazyVerticalGrid(
-                modifier = Modifier
-                    .padding(top = 40.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                columns = GridCells.Fixed(2)
-            ) {
-                items(searchListState.size) { index ->
-                    TemplateItem(
-                        drawableId = searchListState[index].first,
-                        sheetState = sheetState,
-                        scope = scope,
-                        onTemplateClicked = { onTemplateClicked(searchListState[index].first) }
+            Box {
+                Text(
+                    modifier = Modifier
+                        .padding(top = 12.dp),
+                    text = if(searchListState.isNotEmpty()) "${searchListState.size} templates" else "No memes found :(",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.outline
                     )
+                )
+                LazyVerticalGrid(
+                    modifier = Modifier
+                        .padding(top = 40.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    columns = GridCells.Fixed(2)
+                ) {
+                    items(searchListState.size) { index ->
+                        TemplateItem(
+                            template = searchListState[index],
+                            sheetState = sheetState,
+                            scope = scope,
+                            onTemplateClicked = { onTemplateClicked(searchListState[index]) }
+                        )
+                    }
                 }
+
+                BottomBlurredBox(modifier = Modifier.align(Alignment.BottomCenter))
             }
         }
     )

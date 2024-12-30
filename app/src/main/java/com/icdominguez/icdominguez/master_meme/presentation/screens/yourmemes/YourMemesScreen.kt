@@ -66,13 +66,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.icdominguez.icdominguez.master_meme.R
+import com.icdominguez.icdominguez.master_meme.presentation.screens.yourmemes.composables.BottomBlurredBox
 import com.icdominguez.icdominguez.master_meme.presentation.screens.yourmemes.composables.EmptyView
 import com.icdominguez.icdominguez.master_meme.presentation.screens.yourmemes.composables.GradientFloatingActionButton
 import com.icdominguez.icdominguez.master_meme.presentation.screens.yourmemes.composables.SortMemesDropdownMenu
 import com.icdominguez.icdominguez.master_meme.presentation.screens.yourmemes.composables.TemplateItem
 import com.icdominguez.icdominguez.master_meme.presentation.screens.yourmemes.composables.TemplateSearchBar
 import com.icdominguez.icdominguez.master_meme.presentation.screens.yourmemes.dialogs.DeleteMemesDialog
-import com.icdominguez.icdominguez.master_meme.ui.theme.MasterMemeTheme
 import com.icdominguez.icdominguez.master_meme.ui.theme.OnSurface
 import com.icdominguez.icdominguez.master_meme.ui.theme.SecondaryFixedDim
 import kotlinx.coroutines.launch
@@ -80,7 +80,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun YourMemeScreen(
-    onClick: (Int) -> Unit = {},
+    onClick: (String) -> Unit = {},
     state: YourMemesViewModel.State = YourMemesViewModel.State(),
     uiEvent: (YourMemesViewModel.Event) -> Unit = {}
 ) {
@@ -90,67 +90,9 @@ fun YourMemeScreen(
     val bottomSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = if(isSearchActive.value) true else if(!isSearchActive.value && modalExpandedBeforeSearch.value) true else false
     )
-    val drawables = arrayOf(
-        R.drawable.creepy_condescending_wonka,
-        R.drawable.arm_wrestle_agreement,
-        R.drawable.becoming_a_clown,
-        R.drawable.blank_protest_sign,
-        R.drawable.distracted_boyfriend,
-        R.drawable.boardroom_suggestion,
-        R.drawable.change_my_mind,
-        R.drawable.cheers_to_that,
-        R.drawable.chills_down_my_spine,
-        R.drawable.confronting_the_mirror_self,
-        R.drawable.crying_man_close_up,
-        R.drawable.disaster_girl,
-        R.drawable.drake_hotline_bling,
-        R.drawable.empty_todo_list,
-        R.drawable.false_hope,
-        R.drawable.flex_tape,
-        R.drawable.giant_pill_bottle_blocking_face,
-        R.drawable.grus_plan,
-        R.drawable.guy_running_from_the_tornado,
-        R.drawable.handshake_agreement,
-        R.drawable.hard_turn,
-        R.drawable.hide_the_pain_harold,
-        R.drawable.incoming_call,
-        R.drawable.is_this_a_pidgeon,
-        R.drawable.late_night_overthinking,
-        R.drawable.live_reaction,
-        R.drawable.miltons_red_stapler_office,
-        R.drawable.mr_bean_waiting,
-        R.drawable.mr_incredible_becoming_uncanny,
-        R.drawable.ol_reliable,
-        R.drawable.orangutan_morning_show,
-        R.drawable.persistent_plans,
-        R.drawable.running_away_from_responsabilities,
-        R.drawable.sad_megamind_close_up,
-        R.drawable.sad_pablo_escobar_waiting,
-        R.drawable.shocked_cat,
-        R.drawable.skeptical_kid,
-        R.drawable.skinner_the_simpsons,
-        R.drawable.spider_man_pointing,
-        R.drawable.spongebob_comparison,
-        R.drawable.the_rock_driving,
-        R.drawable.thick_vs_thin_bokk,
-        R.drawable.thinking_about_other_girls,
-        R.drawable.tired_ben_affleck,
-        R.drawable.troya_horse,
-        R.drawable.types_of_headaches,
-        R.drawable.two_buttons,
-        R.drawable.waiting_skeleton,
-        R.drawable.x_all_the_y,
-        R.drawable.two_guys_on_a_bus,
-        R.drawable.squidward_window,
-    )
-    val searchList = drawables.map {
-        val name = LocalContext.current.resources.getResourceName(it).split("/").last().lowercase().replace("_", " ")
-        Pair(it, name)
-    }
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
 
-    MasterMemeTheme {
         Scaffold(
             modifier = Modifier
                 .fillMaxSize(),
@@ -357,7 +299,7 @@ fun YourMemeScreen(
                     Box {
                         if(isSearchActive.value) {
                             TemplateSearchBar(
-                                searchList = searchList,
+                                searchList = state.templates,
                                 sheetState = bottomSheetState,
                                 scope = scope,
                                 active = isSearchActive,
@@ -418,32 +360,19 @@ fun YourMemeScreen(
                                     verticalArrangement = Arrangement.spacedBy(16.dp),
                                     columns = GridCells.Fixed(2)
                                 ) {
-                                    items(drawables.size) { index ->
+                                    items(state.templates.size) { index ->
                                         TemplateItem(
-                                            drawableId = drawables[index],
+                                            template = state.templates[index],
                                             sheetState = bottomSheetState,
                                             scope = scope,
-                                            onTemplateClicked = { onClick(drawables[index]) }
+                                            onTemplateClicked = { onClick(state.templates[index]) }
                                         )
                                     }
                                 }
                             }
                         }
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(150.dp)
-                                .align(Alignment.BottomCenter)
-                                .background(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            Color.Black.copy(alpha = 0.9f),
-                                        )
-                                    )
-                                ),
-                        )
+                        BottomBlurredBox(modifier = Modifier.align(Alignment.BottomCenter))
                     }
                 }
             }
@@ -478,7 +407,6 @@ fun YourMemeScreen(
                 }
             }
         }
-    }
 }
 
 @Composable

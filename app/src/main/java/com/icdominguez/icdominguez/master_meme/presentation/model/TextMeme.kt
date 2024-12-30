@@ -8,7 +8,7 @@ data class TextMeme(
     var text: String = "TAP TWICE TO EDIT",
     val typography: CustomFont = CustomFont(),
     val color: String = "#FFFFFF",
-    var fontSize: Float = 20f,
+    var fontSize: Float = 16f,
     var offset: Offset? = null,
     var enabledToEdit: Boolean = false,
 )

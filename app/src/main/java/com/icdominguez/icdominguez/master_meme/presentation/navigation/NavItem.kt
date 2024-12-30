@@ -1,5 +1,6 @@
 package com.icdominguez.icdominguez.master_meme.presentation.navigation
 
+import android.net.Uri
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
@@ -19,8 +20,8 @@ sealed class NavItem(
     }
 
     data object YourMemes: NavItem("your_memes")
-    data object NewMeme: NavItem("new_meme", listOf(NavArg.MemeTemplateId)) {
-        fun createNavRoute(memeTemplateId: Int) = "$baseRoute/$memeTemplateId"
+    data object NewMeme: NavItem("new_meme", listOf(NavArg.MemeTemplate)) {
+        fun createNavRoute(memeTemplate: String) = "$baseRoute/${Uri.encode(memeTemplate)}"
     }
 }
 
@@ -28,8 +29,8 @@ enum class NavArg(
     val key: String,
     val navType: NavType<*>
 ) {
-    MemeTemplateId(
-        key = "memeTemplateId",
-        navType = NavType.IntType
+    MemeTemplate(
+        key = "memeTemplate",
+        navType = NavType.StringType
     )
 }

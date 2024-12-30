@@ -8,8 +8,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.icdominguez.icdominguez.master_meme.FileManager
 import com.icdominguez.icdominguez.master_meme.domain.usecases.InsertNewMemeUseCase
+import com.icdominguez.icdominguez.master_meme.domain.usecases.SaveImageToCache
 import com.icdominguez.icdominguez.master_meme.presentation.MviViewModel
 import com.icdominguez.icdominguez.master_meme.presentation.Utils.generateRandomNumber
 import com.icdominguez.icdominguez.master_meme.presentation.model.TextMeme
@@ -20,8 +20,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NewMemeViewModel @Inject constructor(
-    private val fileManager: FileManager,
     private val insertNewMemeUseCase: InsertNewMemeUseCase,
+    private val saveImageToCache: SaveImageToCache,
 ): MviViewModel<NewMemeViewModel.State, NewMemeViewModel.Event>() {
 
     data class State (
@@ -109,7 +109,7 @@ class NewMemeViewModel @Inject constructor(
             copy(
                 textMemeList = state.value.textMemeList.toMutableList().apply { remove(lastText) }.toList(),
                 redoItems = state.value.redoItems.toMutableList().apply { add(lastText) }.toList(),
-                undoItems = state.value.undoItems.toMutableList().apply { remove(lastText) }.toList()
+                undoItems = state.value.undoItems.toMutableList().apply { this.removeAt(state.value.undoItems.size - 1) }.toList()
             )
         }
     }
@@ -117,7 +117,7 @@ class NewMemeViewModel @Inject constructor(
     private fun onShareMemeButtonClicked(graphicsLayer: GraphicsLayer) {
         viewModelScope.launch {
             val bitmap = graphicsLayer.toImageBitmap()
-            val uri = fileManager.saveImageToCache(bitmap)
+            val uri = saveImageToCache(bitmap)
             updateState { copy(imageUri = uri) }
         }
     }
@@ -149,13 +149,10 @@ class NewMemeViewModel @Inject constructor(
     }
 
     private fun onRemoveTextButtonClicked() {
-        Log.i("icd", "Text to remove: ${state.value.selectedMeme}")
         val texts = state.value.textMemeList.toMutableList().apply {
             val index = this.indexOfFirst { it.id == state.value.selectedMeme?.id }
             this.removeAt(index)
         }.toList()
-
-        Log.i("icd", "Text list updated: $texts")
 
         updateState {
             copy(
@@ -168,7 +165,10 @@ class NewMemeViewModel @Inject constructor(
     }
 
     private fun onAddTextButtonClicked() {
-        val textMeme = TextMeme(id = generateRandomNumber(state.value.textMemeList.map { it.id  }))
+        val textMeme = TextMeme(
+            id = generateRandomNumber(state.value.textMemeList.map { it.id  }),
+            enabledToEdit = true,
+        )
         updateState {
             copy(
                 showOptionsComponent = false,
@@ -182,14 +182,24 @@ class NewMemeViewModel @Inject constructor(
     private fun onDraggableComponentClicked() {
         val updatedTexts = state.value.textMemeList.toMutableList().map { text ->
             if(text.id == state.value.selectedMeme?.id) {
-                text.copy(text = state.value.selectedMeme!!.text)
+                text.copy(
+                    text = state.value.selectedMeme!!.text,
+                    enabledToEdit = false
+                )
             } else {
                 text
             }
         }.toList()
 
+        val undoItems = state.value.undoItems.toMutableList().apply {
+            state.value.selectedMeme?.let {
+                add(it)
+            }
+        }
+
         updateState {
             copy(
+                undoItems = undoItems,
                 textMemeList = updatedTexts,
                 selectedMeme = null
             )
@@ -227,8 +237,8 @@ class NewMemeViewModel @Inject constructor(
                     textMemeList = texts,
                     showEditTextComponent = false,
                     showOptionsComponent = true,
-                    selectedMeme = null,
                     undoItems = state.value.undoItems.toMutableList().apply { add(selectedMeme) }.toList(),
+                    selectedMeme = null,
                     redoItems = emptyList(),
                 )
             }

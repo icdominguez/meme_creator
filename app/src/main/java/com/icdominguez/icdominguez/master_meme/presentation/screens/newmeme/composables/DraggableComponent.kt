@@ -6,13 +6,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Size
@@ -23,13 +21,14 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import coil3.compose.AsyncImage
 import com.icdominguez.icdominguez.master_meme.R
 import com.icdominguez.icdominguez.master_meme.presentation.model.TextMeme
 
 @Composable
 fun DraggableComponent(
     modifier: Modifier = Modifier,
-    memeTemplateId: Int,
+    memeTemplate: String,
     items: List<TextMeme>,
     onRemoveTextButtonClicked: () -> Unit = {},
     onTextTapped: (TextMeme) -> Unit = {},
@@ -58,12 +57,11 @@ fun DraggableComponent(
                 onDraggableComponentClicked()
             },
     ) {
-        Image(
-            modifier = Modifier
-                .fillMaxWidth(),
-            painter = painterResource(memeTemplateId),
+        AsyncImage(
+            modifier = Modifier.fillMaxWidth(),
+            model = memeTemplate,
             contentDescription = null,
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.Fit,
         )
 
         items.map { textMeme ->
@@ -98,7 +96,7 @@ fun DraggableComponent(
 fun SwipableTextPreview() {
     DraggableComponent(
         items = emptyList(),
-        memeTemplateId = R.drawable.arm_wrestle_agreement,
+        memeTemplate = "",
         onRemoveTextButtonClicked = {},
         onTextTapped = {},
         selectedMeme = TextMeme(),
